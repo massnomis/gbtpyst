@@ -1,7 +1,7 @@
 import openai
 import streamlit as st
 st.set_page_config(layout="wide")
-
+ChatGBT_API = st.secrets["ChatGBT_API"]
 openai.api_key = ChatGBT_API
 
 st.title("ChatGPT")
