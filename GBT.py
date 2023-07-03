@@ -6,35 +6,33 @@ openai.api_key = ChatGBT_API
 
 st.title("ChatGPT")
 
-prompt = st.text_area("Enter Prompt", height=400)
+if "openai_model" not in st.session_state:
+    st.session_state["openai_model"] = "gpt-3.5-turbo"
 
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-def gptresp():
-    response = openai.Completion.create(
-    engine="text-davinci-002",
-    prompt=prompt,
-    max_tokens=1024,
-    n=1,
-    stop=None, 
-    temperature=0.5,
-).choices[0].text
-    return response
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
+if prompt := st.chat_input("What is up?"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-
-if st.button("Submit"):
-    response = gptresp()
-    response = response.replace("Response:", "")
-
-
-    with st.expander('Prompt'):
-
-        st.write(prompt)
-
-
-    with st.expander('Response (code)'):
-
-        st.code(response)
-
-    with st.expander('Response (text)'):
-        st.write(response)
+    with st.chat_message("assistant"):
+        message_placeholder = st.empty()
+        full_response = ""
+        for response in openai.ChatCompletion.create(
+            model=st.session_state["openai_model"],
+            messages=[
+                {"role": m["role"], "content": m["content"]}
+                for m in st.session_state.messages
+            ],
+            stream=True,
+        ):
+            full_response += response.choices[0].delta.get("content", "")
+            message_placeholder.markdown(full_response + "▌")
+        message_placeholder.markdown(full_response)
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
