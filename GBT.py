@@ -1,18 +1,18 @@
+
+
 import openai
 import streamlit as st
 st.set_page_config(layout="wide")
+name = 'stchat'
 ChatGBT_API = st.secrets["ChatGBT_API"]
 openai.api_key = ChatGBT_API
 
-st.title("ChatGPT")
-
 if "openai_model" not in st.session_state:
-    st.session_state["openai_model"] = "gpt-4"
-
+    st.session_state["openai_model"] = "gpt-3.5-turbo"
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state["messages"] = []
 
-for message in st.session_state.messages:
+for message in st.session_state.get("messages", []):
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
@@ -28,11 +28,11 @@ if prompt := st.chat_input("What is up?"):
             model=st.session_state["openai_model"],
             messages=[
                 {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
+                for m in st.session_state.get("messages", [])
             ],
             stream=True,
         ):
             full_response += response.choices[0].delta.get("content", "")
             message_placeholder.markdown(full_response + "▌")
         message_placeholder.markdown(full_response)
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
+    st.session_state.get("messages", []).append({"role": "assistant", "content": full_response})
